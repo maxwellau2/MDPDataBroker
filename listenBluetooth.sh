@@ -1,0 +1,1 @@
+sudo rfcomm release 0 && sudo rfcomm watch hci0
