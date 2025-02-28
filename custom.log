@@ -185,3 +185,43 @@
 2025-02-28 19:52:58,382 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
 2025-02-28 19:53:06,070 - ColoredLogger - WARNING - Bluetooth restart completed.
 2025-02-28 19:53:06,074 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 00:53:51,516 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:53:51,516 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:53:59,012 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 00:53:59,012 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 00:53:59,017 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 00:53:59,017 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 00:54:25,377 - ColoredLogger - ERROR - Failed to receive message: [Errno 104] Connection reset by peer
+2025-03-01 00:54:25,377 - ColoredLogger - ERROR - Failed to receive message: [Errno 104] Connection reset by peer
+2025-03-01 00:54:25,383 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:54:25,383 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:54:38,002 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 00:54:38,002 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 00:54:38,004 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 00:54:38,004 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 00:56:27,555 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:56:27,555 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:57:43,823 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 00:57:56,457 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 00:57:56,461 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 01:01:07,055 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 01:01:19,688 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 01:01:19,692 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 01:07:33,720 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 01:07:46,374 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 01:07:46,378 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 01:10:04,663 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:10:04,663 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:10:06,372 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:10:06,372 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:10:09,720 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:10:09,720 - ColoredLogger - WARNING - Invalid message format: 'from'
+2025-03-01 01:15:57,264 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 01:16:10,425 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 01:16:10,429 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 02:41:59,877 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 02:42:12,498 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 02:42:12,502 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device
+2025-03-01 02:43:05,176 - ColoredLogger - WARNING - Restarting Bluetooth and making it discoverable...
+2025-03-01 02:43:12,812 - ColoredLogger - WARNING - Bluetooth restart completed.
+2025-03-01 02:43:12,842 - ColoredLogger - WARNING - Bluetooth connection failed (Attempt 1/6): no advertisable device

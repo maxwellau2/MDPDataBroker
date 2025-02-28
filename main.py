@@ -27,7 +27,7 @@ class BrokerCenter:
         # client brokers
         # self.algo_broker: TCPClient = TCPClient(server_host=ALGO_TCP_IP, server_port=ALGO_TCP_PORT)
         # maxwell debugging his bullshit lol
-        self.algo_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
+        self.algo_broker: TCPClient = TCPClient(server_host=ALGO_TCP_IP, server_port=ALGO_TCP_PORT)
         self.image_prediction_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
 
         
@@ -54,6 +54,7 @@ class BrokerCenter:
             "logger": createLogger(),
             "algo_broker": self.algo_broker,
             "image_prediction_broker":self.image_prediction_broker,
+            "predicted_image": None
         })
 
     def connect_all(self):
@@ -113,13 +114,14 @@ class BrokerCenter:
         self.running_threads.append(queue_thread)
         queue_thread.start()
 
-        # Start WebSocket monitor in a thread
-        websocket_thread = Thread(target=run_websocket_monitor, daemon=True)
-        self.running_threads.append(websocket_thread)
-        websocket_thread.start()
+        # # Start WebSocket monitor in a thread
+        # websocket_thread = Thread(target=run_websocket_monitor, daemon=True)
+        # self.running_threads.append(websocket_thread)
+        # websocket_thread.start()
 
         # Start (Android, STM) brokers as threads
-        for broker in [self.stm_broker, self.android_broker]:
+        for broker in [self.stm_broker, self.android_broker, self.image_prediction_broker]:
+        # for broker in [self.stm_broker, self.android_broker, self.algo_broker, self.image_prediction_broker]:
         # for broker in [self.android_broker, self.stm_broker]:
             broker_thread = Thread(target=broker.run_until_death, args=(self.add_to_queue,))
             self.running_threads.append(broker_thread)
@@ -199,17 +201,24 @@ class BrokerCenter:
                     proc = 40
 
             if proc == 31:
+                # process instruction
                 if instruction[0] == "P":
                     # stop and do prediction
-                    response = self.image_prediction_broker.send_message("predict")
+                    gvl.predicted_image = None
+                    self.image_prediction_broker.send_message("predict")
+                    while(not gvl.predicted_image):
+                        time.sleep(0.1)
+                    GVL().logger.info(f"Predicted image: {gvl.predicted_image}")
                     # do something with the response.. idk yet
                 else:
                     # if not prediction, send to stm and wait for ack
                     print(f"Sending instruction: {instruction}")
+                    self.stm_broker.send(instruction)
                 # go and wait for the ack in 32
                 proc = 32
 
             if proc == 32:
+                # wait for acknowledgement
                 if gvl.stm_ack == True:
                     gvl.stm_ack = False
                     proc = 30
@@ -225,29 +234,32 @@ class BrokerCenter:
         """
         Run the broker center
         """
+        self.connect_all()
         self._initialise_GVL()
-
+        self.start_threads()
         # Start all brokers
-        for broker in self.broker_mapper.values():
-            broker_thread = Thread(target=broker.run)
-            self.running_threads.append(broker_thread)
-            broker_thread.start()
+        # for broker in self.broker_mapper.values():
+        #     broker_thread = Thread(target=broker.run)
+        #     self.running_threads.append(broker_thread)
+        #     broker_thread.start()
+
+        
 
         # Tkinter Monitor Thread (uncomment to use Tkinter)
         # monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
         # monitor_thread.start()
         # self.running_threads.append(monitor_thread)
 
-        # Start image streaming as process
-        stream_process = Process(target=self.stream.run_broker_in_process)
-        stream_process.start()
+        # # Start image streaming as process
+        # stream_process = Process(target=self.stream.run_broker_in_process)
+        # stream_process.start()
 
         # Keep the main thread running
-        try:
-            for thread in self.running_threads:
-                thread.join()
-        except KeyboardInterrupt:
-            print("Stopping all brokers...")
+        # try:
+        #     for thread in self.running_threads:
+        #         thread.join()
+        # except KeyboardInterrupt:
+        #     print("Stopping all brokers...")
 
 if __name__ == "__main__":
     broker_center = BrokerCenter()

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import socket
+import bluetooth
 import serial
 import time
 import sys
@@ -49,6 +50,21 @@ def check_udp_connection(host, port):
     except Exception as e:
         print_status(f"UDP Image Port ({host}:{port})", False, f"- Error: {str(e)}")
         return False
+    
+
+def check_bluetooth_connection():
+    """
+    Check if any Bluetooth device is currently connected.
+    Returns:
+        bool: True if a Bluetooth device is connected, False otherwise.
+    """
+    try:
+        nearby_devices = bluetooth.discover_devices(duration=3, lookup_names=True)
+        if nearby_devices:
+            print_status(f"Bluetooth Connection", True)
+    except bluetooth.BluetoothError as e:
+        print_status(f"Bluetooth Connection", False, e)
+
 
 def check_serial_connection(port, baudrate, service_name, timeout=1):
     try:
@@ -92,7 +108,7 @@ def main():
     stm_status = check_serial_connection(STM_PORT, STM_BAUD_RATE, "STM")
     
     # Check Bluetooth Connection
-    bluetooth_status = check_serial_connection(BLUETOOTH_PORT, 9600, "Bluetooth")
+    bluetooth_status = check_bluetooth_connection()
     
     # Check Pi Camera (if running on Raspberry Pi)
     camera_status = check_camera()

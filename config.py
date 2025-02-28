@@ -1,4 +1,4 @@
-BLUETOOTH_PORT = "/dev/rfcomm0"
+BLUETOOTH_PORT = "/dev/rfcomm3"
 
 STM_PORT = "/dev/ttyUSB0"
 STM_BAUD_RATE = 115200
