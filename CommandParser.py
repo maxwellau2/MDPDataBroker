@@ -47,7 +47,7 @@ class CommandParser:
 
 
     @staticmethod
-    def parse_algo_path_to_stm_queue(path_list: list[dict]):
+    def parse_algo_path_to_stm_queue(path_list):
         # parse
         parsed_commands = []
         for path in path_list:

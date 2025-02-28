@@ -37,7 +37,7 @@ class AndroidBroker(Broker):
         elif message["type"] == "command":
             GVL().taskId = int(message["data"]["taskId"])
             GVL().start = bool(message["data"]["instruction"] == "start")
-        self.send(f"Echo from server: {message}")
+        # self.send(f"Echo from server: {message}")
 
 
     def send_scanning(self, position_x: int, position_y: int, orientation: str):

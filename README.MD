@@ -38,6 +38,8 @@ sudo rfcomm bind /dev/rfcomm0 XX:XX:XX:XX:XX:XX 1
 bluetoothctl paired-devices
 
 # check if rfcomm is used in another process?
+ps aux | grep rfcomm
+
 sudo lsof /dev/rfcomm0
 sudo kill -9 <PID>
 

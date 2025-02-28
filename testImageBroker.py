@@ -9,6 +9,7 @@ UDP_PORT = 9999
 PACKET_SIZE = 4096
 
 # Create UDP socket
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1000000)  # 1MB Buffer
 sock.bind((UDP_IP, UDP_PORT))

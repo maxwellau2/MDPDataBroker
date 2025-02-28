@@ -4,6 +4,14 @@ STM_PORT = "/dev/ttyUSB0"
 STM_BAUD_RATE = 115200
 
 # Max laptop:
+IMG_TCP_IP="192.168.24.20"
+IMG_TCP_PORT=5000
+
+# ziyan laptop
+ALGO_TCP_IP="192.168.24.32"
+ALGO_TCP_PORT=4000
+
+# Max laptop:
 UDP_IP = "192.168.24.20"
 # Syed:
 # UDP_IP = "192.168.24.49" 

@@ -4,6 +4,7 @@ from Broker import Broker
 from serial import Serial
 from GlobalVariableManager import GVL
 from config import *
+import json
 
 # need to adjust.?
 COM_PORT = "COM5"
@@ -107,37 +108,37 @@ if __name__ == "__main__":
         print("2. rotate")
         print("3. Navigate")
         res = input("enter case number: ")
-        once = False
-        command2 = "CF089\n"
+        command = "FW010"
+        command2 = "CF089"
+        toSend = command
+        
         if res == "0":
             command = input("enter command: ")
-            #command = "FW010\n"
-            #toSend = command
-            broker.send(command)
-            # time.sleep(1)
-            # broker.send(command2)
-            
-            i = 0
+            broker.send(command)           
+
             while True:
-
-
                 text = broker.receive()
-
-                # print(text)
-                # if (text == 'FW010{"from" : "stm","msg" : {type: "ack"\}\}' or text == 'CF089{"from" : "stm","msg" : {type: "ack"\}\}') and text is not None:
-                if text == "{\"from\" : \"stm\",\"msg\" : {type: \"ack\"}}\n" and text is not None:
-                    print(text, len(text), type(text))
-                    #if toSend == command:
-                    #    toSend = command2
-                    #else:
-                    #    toSend = command
-                    #broker.send(toSend)
-                    # time.sleep(1)
-                    i += 1
-                    print(i)
-
-                elif text != "":
-                    print(text, len(text), type(text))
+                print(text)
+                if text != "" and text is not None:
+                    res = json.loads(text)
+                    sender = res['from']
+                    content = res['msg']
+                    # use this to check
+                    if "type" in content and "ack" == content["type"]:
+                        print("DIUUUUUUUUUUUUU")
+                    # if len(text) > 15:
+                        print(text)
+                        text = ""
+                        break
+                        
+                
+                # if len(text) > 15:
+                #     if toSend == command:
+                #         toSend = command2
+                #     else:
+                #         toSend = command
+                #     print("Sending:" + toSend)
+                #     broker.send(toSend)
 
         if res == "1":
             broker.send("FW110")
@@ -154,7 +155,7 @@ if __name__ == "__main__":
                     break
 
         if res == "3":
-            sleepTime = 3
+            sleepTime = 0
             for i in range(0,4):
                 time.sleep(sleepTime)
                 cs = 0
@@ -165,14 +166,17 @@ if __name__ == "__main__":
                         # send command to move until x distance
                         broker.send("DT010")
                         print("in 0")
-                        while text == "" or text is None:
-                            text = broker.receive()
-                            # print(text)
-                        print(text, len(text), type(text))
 
+                        #Waiting for ACK from STM
+                        while True:
+                            text = broker.receive()
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         time.sleep(sleepTime)
                         text = ""
-                        cs = 5
+                        cs = 20 #5
 
                     if cs == 5:
                         # perform prediction
@@ -204,9 +208,14 @@ if __name__ == "__main__":
                         broker.send("CB087")
                         # broker.send("BA090\n") # always 90
                         print("in 20")
-                        while text == "" or text is None:
+
+                        #Waiting for ACK from STM
+                        while True:
                             text = broker.receive()
-                        print(text, len(text), type(text))
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         
                         text = ""
                         cs = 30
@@ -217,9 +226,12 @@ if __name__ == "__main__":
                         # send the forward
                         broker.send("FW070")
                         print("in 30")
-                        while text == "" or text is None:
+                        while True:
                             text = broker.receive()
-                        print(text, len(text), type(text))
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         text = ""
                         cs = 40
                         broker.serial_conn.flush()
@@ -229,9 +241,12 @@ if __name__ == "__main__":
                         # send the rotation 180 cw
                         broker.send("CF080")
                         print("in 40")
-                        while text == "" or text is None:
+                        while True:
                             text = broker.receive()
-                        print(text, len(text), type(text))
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         text = ""
                         cs = 50
                         broker.serial_conn.flush()
@@ -241,9 +256,12 @@ if __name__ == "__main__":
                         # send the rotation 180 cw
                         broker.send("FW007")
                         print("in 50")
-                        while text == "" or text is None:
+                        while True:
                             text = broker.receive()
-                        print(text, len(text), type(text))
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         text = ""
                         cs = 60
                         broker.serial_conn.flush()
@@ -254,9 +272,12 @@ if __name__ == "__main__":
                         # send the rotation 180 cw
                         broker.send("CF080")
                         print("in 60")
-                        while text == "" or text is None:
+                        while True:
                             text = broker.receive()
-                        print(text, len(text), type(text))
+                            if len(text) > 15:
+                                print(text)
+                                break
+                        # print(text, len(text), type(text))
                         text = ""
                         cs = 70
                         broker.serial_conn.flush()
