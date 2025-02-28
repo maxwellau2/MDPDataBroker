@@ -11,30 +11,30 @@ class TCPClient:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(2)  # Set timeout for quick response
                 sock.connect((self.server_host, self.server_port))
-            print(f"Connection to {self.server_host}:{self.server_port} successful.")
+            # print(f"Connection to {self.server_host}:{self.server_port} successful.")
             return True
         except (socket.timeout, ConnectionRefusedError):
-            print(f"Could not connect to {self.server_host}:{self.server_port}.")
+            # print(f"Could not connect to {self.server_host}:{self.server_port}.")
             return False
 
     def send(self, message: str) -> str:
         """Connect to the server, send a message, and receive a response."""
         if not self.check_connection():
-            print("Server is unreachable. Aborting message send.")
+            # print("Server is unreachable. Aborting message send.")
             return
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             try:
                 client_socket.connect((self.server_host, self.server_port))
-                print(f"Connected to server at {self.server_host}:{self.server_port}")
+                # print(f"Connected to server at {self.server_host}:{self.server_port}")
 
                 client_socket.send(message.encode('utf-8'))
                 response = client_socket.recv(1024).decode('utf-8')
-                print(f"Server response: {response}")
+                # print(f"Server response: {response}")
                 return response
 
             except Exception as e:
-                print(f"Connection error: {e}")
+                # print(f"Connection error: {e}")
                 return "error"
 
 if __name__ == "__main__":

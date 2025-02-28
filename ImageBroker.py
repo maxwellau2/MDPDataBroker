@@ -6,6 +6,8 @@ import time
 import picamera
 from multiprocessing import Process
 
+from GlobalVariableManager import GVL
+
 # Constants
 PACKET_SIZE = 1400  # UDP packet size < 1500 bytes (safe for most networks)
 WIDTH, HEIGHT = 640, 480
@@ -33,7 +35,8 @@ class ImageBroker:
 
     def connect(self) -> int:
         """Simulate connection (always successful)."""
-        print(f"Connecting to {self.ip_address}:{self.udp_port}")
+        GVL().logger.info(f"Connecting to {self.ip_address}:{self.udp_port}")
+        # print(f"Connecting to {self.ip_address}:{self.udp_port}")
         return 1  # Success
 
     def capture_frame(self):
@@ -68,7 +71,7 @@ class ImageBroker:
                     self.sock.sendto(frame_data[i:i + PACKET_SIZE], (self.ip_address, self.udp_port))
                     
             except OSError as e:
-                print(f"Socket error: {e}")
+                GVL().logger.error(f"Socket error: {e}")
 
             time.sleep(1 / FPS)  # Maintain FPS timing
 
@@ -85,7 +88,7 @@ class ImageBroker:
             while self.running:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("Stopping stream...")
+            GVL().logger.info("Keyboard interrupt, stopping stream")
             self.stop()
         finally:
             capture_thread.join()
@@ -93,7 +96,7 @@ class ImageBroker:
 
     def stop(self):
         """Stop streaming and release resources."""
-        print("Releasing camera and socket resources...")
+        GVL().logger.info("Releasing camera and socket resources...")
         self.running = False
         self.camera.close()
         self.sock.close()

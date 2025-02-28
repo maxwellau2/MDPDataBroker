@@ -11,16 +11,20 @@ from config import *
 import queue
 from multiprocessing import Process
 from CommandParser import CommandParser
-from GlobalVariableManager import GVL
+from GlobalVariableManager import GVL, GVLMonitorRunner
+from Logger import createLogger
 
 class BrokerCenter:
     def __init__(self):
         self.stream: ImageBrokerRunner = ImageBrokerRunner(udp_port=UDP_PORT, ip_address=UDP_IP)
-        self.android_broker: AndroidBroker =  AndroidBroker(strategy=SerialBluetooth(com_port=BLUETOOTH_PORT))
+        self.android_broker: AndroidBroker =  AndroidBroker()
         self.stm_broker: STMBroker =  STMBroker(com_port=STM_PORT, baud_rate=STM_BAUD_RATE)
         # client brokers
         self.algo_broker: TCPClient = TCPClient(server_host=ALGO_TCP_IP, server_port=ALGO_TCP_PORT)
         self.image_prediction_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
+
+        # GVL monitor
+        self.gvl_monitor: GVLMonitorRunner = GVLMonitorRunner()
         self.running_threads: list[Thread] = []
         self.queue: queue.Queue[str] = queue.Queue(maxsize=100)
         self.write_semaphore: Semaphore = Semaphore(1)
@@ -42,16 +46,20 @@ class BrokerCenter:
             "taskId": -1,
             "isRunning": False,
             "obstacleIdSequence":[],
+            "logger": createLogger(),
         })
 
     def connect_all(self):
         """Connects all brokers."""
+        GVL().logger.info("Connecting..")
         for broker in [self.android_broker,self.stm_broker,self.algo_broker,self.image_prediction_broker]:
             broker.connect()
+        GVL().logger.info("Connected..")
         # self.stream.connect()
 
     def add_to_queue(self, message: str):
         """Thread-safe message queuing."""
+        print(f"queuing {message}")
         self.write_semaphore.acquire()
         # critical section..
         self.queue.put(message)
@@ -66,16 +74,17 @@ class BrokerCenter:
 
             self.read_semaphore.acquire()
             # critical section..
-            print(f"Processed Message: {message}")  # Replace with actual processing logic
-            
+            # print(f"Processed Message: {message}")  # Replace with actual processing logic
+            GVL().logger.info(f"Processing Message: {message}")
             try:
                 res = CommandParser.json_decode(message.strip())
                 if res != "" and res is not None:
                     # json_dict = json.loads(message)
                     # broker_name = json_dict["from"]
-                    print(res)
+                    # print(res)
                     sender = res['from']
                     content = res['msg']
+                    # print(sender, content)
                     broker: Broker = self.broker_mapper[sender]
                     broker.consume(content)
                     if GVL().taskId == "1" and not GVL().isRunning:
@@ -83,9 +92,10 @@ class BrokerCenter:
                         Thread(target=self.task1,args=(None))
 
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"Invalid message format: {e}")
+                GVL().logger.warning(f"Invalid message format: {e}")
             finally:
                 # ALWAYS RELEASE THE SEMAPHORE AFTER USE
+                GVL().logger.debug(GVL()._shared_borg_state)
                 self.read_semaphore.release()
                 self.queue.task_done()
 
@@ -97,11 +107,17 @@ class BrokerCenter:
         queue_thread.start()
 
         # Start (Android, STM) brokers as threads
-        for broker in [ self.stm_broker]:
+        for broker in [self.stm_broker]:
         # for broker in [self.android_broker, self.stm_broker]:
             broker_thread = Thread(target=broker.run_until_death, args=(self.add_to_queue,))
             self.running_threads.append(broker_thread)
             broker_thread.start()
+
+        # GVL monitor
+        monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
+        monitor_thread.start()
+        self.running_threads.append(monitor_thread)
+
 
         # Start image streaming as process
         stream_process = Process(target=self.stream.run_broker_in_process)
@@ -129,9 +145,11 @@ class BrokerCenter:
 
         # 7. send a path_done signal to android.
         gvl = GVL()
-        proc = 0
-        temp_buffer = []
+        proc = 0 # to store the state machine
+        temp_buffer = [] # temp buffer to send the instruciton list, using a deep copy
+        instruction = "" # variable to store instruction like FW010 or BW010 etc...
         while True:
+            # 0. Check that map not empty and the map has been sent
             if proc == 0:
                 if gvl.has_sent_map and gvl.android_map:
                     # reset this flag
@@ -167,22 +185,28 @@ class BrokerCenter:
                     proc = 30
 
             if proc == 30:
-                while len(temp_buffer) > 0:
+                # retrive instruction
+                if len(temp_buffer) > 0:
                     instruction = temp_buffer.pop(0)
-                    # look if the instruction is a P command
-                    if instruction[0] == "P":
-                        # stop and do prediction
-                        response = self.image_prediction_broker.send_message("predict")
-                        # do something with the response.. idk yet
-                    else:
-                        # if not prediction, send to stm and wait for ack
-                        print(f"Sending instruction: {instruction}")
-                        self.stm_broker.send(instruction)
-                        while gvl.stm_ack == False:
-                            time.sleep(0.1) # wait for ack
-                        gvl.stm_ack = False
-                # all done! send the path_done signal to android
-                proc = 40
+                    proc = 31
+                else:
+                    proc = 40
+
+            if proc == 31:
+                if instruction[0] == "P":
+                    # stop and do prediction
+                    response = self.image_prediction_broker.send_message("predict")
+                    # do something with the response.. idk yet
+                else:
+                    # if not prediction, send to stm and wait for ack
+                    print(f"Sending instruction: {instruction}")
+                # go and wait for the ack in 32
+                proc = 32
+
+            if proc == 32:
+                if gvl.stm_ack == True:
+                    gvl.stm_ack = False
+                    proc = 30
             
             if proc == 40:
                 # send path_done signal to android

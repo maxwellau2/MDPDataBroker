@@ -1,5 +1,7 @@
 import json
 
+from GlobalVariableManager import GVL
+
 class CommandParser:
     def __init__(self):
         pass
@@ -12,12 +14,13 @@ class CommandParser:
             res = json.loads(msg)
             return res
         except json.decoder.JSONDecodeError:
-            print("Error with decoding, please format data properly")
+            # print("Error with decoding, please format data properly")
             return {"error": True}
 
     @staticmethod
     def parse_command(msg: str):
         # decode
+        GVL().logger.debug("")
         content: dict = CommandParser.json_decode(msg)
         # check from who
         sender = content['from']
@@ -38,7 +41,7 @@ class CommandParser:
         elif key == "r":
             movement = "C"
         else:
-            print(f"uncaught movement type: {key}")
+            # print(f"uncaught movement type: {key}")
             return None
         if movement in ['A', 'C']: # add the sapce
             return f"{movement} {int(float(algo_command[key]))}"

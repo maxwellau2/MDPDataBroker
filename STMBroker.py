@@ -33,11 +33,11 @@ class STMBroker(Broker):
         self.com_port = com_port
         self.baud_rate = baud_rate
         self.serial_conn = None
-        self.connect()
+        # self.connect()
     def connect(self) -> int:
         try:
             self.serial_conn = Serial(self.com_port, self.baud_rate, timeout=1)
-            print(f"Connected to STM on {self.com_port}")
+            GVL().logger.info(f"Connected to STM on {self.com_port}")
             return 1  # Success
         except Exception as e:
             print(f"Failed to connect: {e}")
@@ -95,6 +95,7 @@ class STMBroker(Broker):
         #     }
         # }
         if "type" in message and "ack" == message["type"]:
+            GVL().logger.debug("Acknowledgement received from STM")
             GVL().stm_ack = True
         pass
 
@@ -142,10 +143,11 @@ if __name__ == "__main__":
 
         if res == "1":
             broker.send("FW110")
-            while True:
-                text = broker.receive()
-                if text != "" and text is not None:
-                    break
+            break
+            # while True:
+            #     text = broker.receive()
+            #     if text != "" and text is not None:
+                    # break
         if res == "2":
             broker.send("AF180")
             # broker.send_rot("CF360")
