@@ -2,6 +2,8 @@ from typing import cast
 from typing_extensions import TypedDict 
 import logging
 
+from Logger import createLogger
+
 class GVLState(TypedDict):
     stm_ack: bool
     algo_ack: bool
@@ -15,14 +17,25 @@ class GVLState(TypedDict):
     logger: logging.Logger
 
 class GVL:
-    _shared_borg_state: GVLState = cast(GVLState,{})  # Shared state across all instances
+    _shared_borg_state: GVLState = cast(GVLState,{
+            "stm_ack": False,
+            "algo_ack": False,
+            "android_map_data": {} ,
+            "android_has_sent_map": False,
+            "stm_instruction_list": [],
+            "start": False,
+            "taskId": -1,
+            "isRunning": False,
+            "obstacleIdSequence":[],
+            "logger": createLogger(),
+        })  # Shared state across all instances
     _callbacks = []  # List of functions to call on update
 
     def __new__(cls, *args, **kwargs):
         obj = super(GVL, cls).__new__(cls, *args, **kwargs)
         obj.__dict__ = cls._shared_borg_state
         return obj
-
+    
     @staticmethod
     def initialise(dic: dict):
         """Initialize GVL state."""

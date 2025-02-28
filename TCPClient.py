@@ -28,7 +28,7 @@ class TCPClient:
         return response
 
 if __name__ == "__main__":
-    client = TCPClient(server_host='192.168.24.32', server_port=4000)
+    client = TCPClient(server_host='192.168.24.20', server_port=6060)
     data = {
             "from": "android",
             "msg": {
