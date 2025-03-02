@@ -30,12 +30,6 @@ class BrokerCenter:
         self.algo_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
         self.image_prediction_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
 
-        # WebSocket Monitor
-        self.monitor_process = Process(target=run_websocket_monitor)
-        self.monitor_process.start()
-
-        # Uncomment these lines to use Tkinter instead of WebSocket
-        # self.gvl_monitor: GVLMonitorRunner = GVLMonitorRunner()
         
         self.running_threads: list[Thread] = []
         self.queue: queue.Queue[str] = queue.Queue(maxsize=100)
@@ -118,6 +112,11 @@ class BrokerCenter:
         queue_thread = Thread(target=self.queue_listener, daemon=True)
         self.running_threads.append(queue_thread)
         queue_thread.start()
+
+        # Start WebSocket monitor in a thread
+        websocket_thread = Thread(target=run_websocket_monitor, daemon=True)
+        self.running_threads.append(websocket_thread)
+        websocket_thread.start()
 
         # Start (Android, STM) brokers as threads
         for broker in [self.stm_broker, self.android_broker]:
@@ -223,25 +222,32 @@ class BrokerCenter:
 
 
     def run(self):
-        """Runs the broker center."""
+        """
+        Run the broker center
+        """
         self._initialise_GVL()
-        self.connect_all()
-        self.start_threads()
+
+        # Start all brokers
+        for broker in self.broker_mapper.values():
+            broker_thread = Thread(target=broker.run)
+            self.running_threads.append(broker_thread)
+            broker_thread.start()
+
+        # Tkinter Monitor Thread (uncomment to use Tkinter)
+        # monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
+        # monitor_thread.start()
+        # self.running_threads.append(monitor_thread)
+
+        # Start image streaming as process
+        stream_process = Process(target=self.stream.run_broker_in_process)
+        stream_process.start()
 
         # Keep the main thread running
         try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nShutting down gracefully...")
-            # Cleanup WebSocket monitor process if it's running
-            if hasattr(self, 'monitor_process') and self.monitor_process.is_alive():
-                self.monitor_process.terminate()
-                self.monitor_process.join()
-            
-            # Cleanup other processes and threads
             for thread in self.running_threads:
                 thread.join()
+        except KeyboardInterrupt:
+            print("Stopping all brokers...")
 
 if __name__ == "__main__":
     broker_center = BrokerCenter()
