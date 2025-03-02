@@ -13,6 +13,7 @@ import queue
 from multiprocessing import Process
 from CommandParser import CommandParser
 from GlobalVariableManager import GVL, GVLMonitorRunner
+from gvl_websocket import run_websocket_monitor
 from Logger import createLogger
 
 if "DISPLAY" not in os.environ or os.environ["DISPLAY"] == "":
@@ -29,8 +30,13 @@ class BrokerCenter:
         self.algo_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
         self.image_prediction_broker: TCPClient = TCPClient(server_host=IMG_TCP_IP, server_port=IMG_TCP_PORT)
 
-        # GVL monitor
-        self.gvl_monitor: GVLMonitorRunner = GVLMonitorRunner()
+        # WebSocket Monitor
+        self.monitor_process = Process(target=run_websocket_monitor)
+        self.monitor_process.start()
+
+        # Uncomment these lines to use Tkinter instead of WebSocket
+        # self.gvl_monitor: GVLMonitorRunner = GVLMonitorRunner()
+        
         self.running_threads: list[Thread] = []
         self.queue: queue.Queue[str] = queue.Queue(maxsize=100)
         self.write_semaphore: Semaphore = Semaphore(1)
@@ -119,12 +125,6 @@ class BrokerCenter:
             broker_thread = Thread(target=broker.run_until_death, args=(self.add_to_queue,))
             self.running_threads.append(broker_thread)
             broker_thread.start()
-
-        # GVL monitor
-        # monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
-        # monitor_thread.start()
-        # self.running_threads.append(monitor_thread)
-
 
         # Start image streaming as process
         stream_process = Process(target=self.stream.run_broker_in_process)
@@ -223,9 +223,25 @@ class BrokerCenter:
 
 
     def run(self):
-        """Runs the broker center."""
-        self.connect_all()
-        self.start_threads()
+        """
+        Run the broker center
+        """
+        self._initialise_GVL()
+
+        # Start all brokers
+        for broker in self.broker_mapper.values():
+            broker_thread = Thread(target=broker.run)
+            self.running_threads.append(broker_thread)
+            broker_thread.start()
+
+        # Tkinter Monitor Thread (uncomment to use Tkinter)
+        # monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
+        # monitor_thread.start()
+        # self.running_threads.append(monitor_thread)
+
+        # Start image streaming as process
+        stream_process = Process(target=self.stream.run_broker_in_process)
+        stream_process.start()
 
         # Keep the main thread running
         try:
