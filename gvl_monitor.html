@@ -67,6 +67,7 @@
             padding: 8px;
             border-radius: 4px;
             word-break: break-all;
+            white-space: pre-wrap;
         }
         .updated {
             animation: highlight 1s ease-out;
@@ -95,24 +96,49 @@
         const statusSpan = document.getElementById('connection-status');
 
         function connectWebSocket() {
-            ws = new WebSocket('ws://localhost:8765');
+            console.log("Attempting to connect to WebSocket...");
+            ws = new WebSocket('ws://localhost:8766');
 
             ws.onopen = () => {
+                console.log("WebSocket connected!");
                 statusSpan.textContent = 'Connected';
                 statusSpan.className = 'status connected';
             };
 
             ws.onclose = () => {
+                console.log("WebSocket disconnected!");
                 statusSpan.textContent = 'Disconnected';
                 statusSpan.className = 'status disconnected';
                 // Try to reconnect after 2 seconds
                 setTimeout(connectWebSocket, 2000);
             };
 
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+
             ws.onmessage = (event) => {
+                console.log("Received message:", event.data);
                 const message = JSON.parse(event.data);
                 updateVariables(message.data);
             };
+        }
+
+        function formatValue(value) {
+            if (value === null) return 'null';
+            if (value === undefined) return 'undefined';
+            
+            if (typeof value === 'object') {
+                if (Array.isArray(value)) {
+                    return JSON.stringify(value, null, 2)
+                        .replace(/\n/g, '<br>')
+                        .replace(/ /g, '&nbsp;');
+                }
+                return JSON.stringify(value, null, 2)
+                    .replace(/\n/g, '<br>')
+                    .replace(/ /g, '&nbsp;');
+            }
+            return value.toString();
         }
 
         function updateVariables(data) {
@@ -127,14 +153,15 @@
                     card.className = 'variable-card';
                     card.innerHTML = `
                         <div class="variable-name">${name}</div>
-                        <div class="variable-value">${value}</div>
+                        <div class="variable-value">${formatValue(value)}</div>
                     `;
                     variablesDiv.appendChild(card);
                 } else {
                     // Update existing card
                     const valueDiv = card.querySelector('.variable-value');
-                    if (valueDiv.textContent !== value) {
-                        valueDiv.textContent = value;
+                    const formattedValue = formatValue(value);
+                    if (valueDiv.innerHTML !== formattedValue) {
+                        valueDiv.innerHTML = formattedValue;
                         card.classList.add('updated');
                         setTimeout(() => card.classList.remove('updated'), 1000);
                     }

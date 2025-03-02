@@ -223,32 +223,25 @@ class BrokerCenter:
 
 
     def run(self):
-        """
-        Run the broker center
-        """
+        """Runs the broker center."""
         self._initialise_GVL()
-
-        # Start all brokers
-        for broker in self.broker_mapper.values():
-            broker_thread = Thread(target=broker.run)
-            self.running_threads.append(broker_thread)
-            broker_thread.start()
-
-        # Tkinter Monitor Thread (uncomment to use Tkinter)
-        # monitor_thread = Thread(target=self.gvl_monitor.run_GVL_monitor)
-        # monitor_thread.start()
-        # self.running_threads.append(monitor_thread)
-
-        # Start image streaming as process
-        stream_process = Process(target=self.stream.run_broker_in_process)
-        stream_process.start()
+        self.connect_all()
+        self.start_threads()
 
         # Keep the main thread running
         try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nShutting down gracefully...")
+            # Cleanup WebSocket monitor process if it's running
+            if hasattr(self, 'monitor_process') and self.monitor_process.is_alive():
+                self.monitor_process.terminate()
+                self.monitor_process.join()
+            
+            # Cleanup other processes and threads
             for thread in self.running_threads:
                 thread.join()
-        except KeyboardInterrupt:
-            print("Stopping all brokers...")
 
 if __name__ == "__main__":
     broker_center = BrokerCenter()
