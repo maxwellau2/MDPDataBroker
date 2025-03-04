@@ -1,3 +1,4 @@
+from threading import Thread
 import time
 from typing import Callable
 from Broker import Broker
@@ -102,7 +103,10 @@ class STMBroker(Broker):
 
 if __name__ == "__main__":
     broker = STMBroker(STM_PORT, STM_BAUD_RATE)
-    # broker.connect()
+
+    # t1 = Thread(target=broker.run_until_death, args=(print,))
+    # t1.start()
+    broker.connect()
     while True:
         print("0. test command")
         print("1. straight movement")
@@ -115,11 +119,10 @@ if __name__ == "__main__":
         
         if res == "0":
             command = input("enter command: ")
-            broker.send(command)           
+            broker.send(command)        
 
             while True:
                 text = broker.receive()
-                print(text)
                 if text != "" and text is not None:
                     res = json.loads(text)
                     sender = res['from']

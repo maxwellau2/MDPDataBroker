@@ -2,4 +2,4 @@ activate:
 	source ./venv/bin/activate
 
 run:
-	python STMBroker.py
+	sudo venv/bin/python main.py

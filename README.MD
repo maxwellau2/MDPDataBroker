@@ -45,5 +45,6 @@ sudo kill -9 <PID>
 
 sudo systemctl restart bluetooth
 
+sudo venv/bin/python main.py
 
 ```

@@ -12,13 +12,13 @@ class AndroidBroker(Broker):
         self.server_sock = None
         self.client_sock = None
         self.client_info = None
-        self.uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"  # Unique service UUID
+        self.uuid = "00001101-0000-1000-8000-00805F9B34FB"  # Unique service UUID
 
     def setup_server(self):
         """Sets up the Bluetooth server socket and makes it discoverable."""
         GVL().logger.info("Setting up Bluetooth server...")
         self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.server_sock.bind(("", bluetooth.PORT_ANY))
+        self.server_sock.bind(("", 1))
         self.server_sock.listen(1)
         port = self.server_sock.getsockname()[1]
 
@@ -46,12 +46,16 @@ class AndroidBroker(Broker):
                 GVL().logger.info(f"Bluetooth connection attempt {attempt + 1}/{max_retries}")
                 
                 if attempt == 0:
+                    self.cleanup()
                     self.restart_bluetooth()  # Only restart Bluetooth on the first attempt
                     self.setup_server()  # Start the Bluetooth server
 
                 self.client_sock, self.client_info = self.server_sock.accept()
                 GVL().logger.info(f"Accepted connection from {self.client_info}")
                 print(f"Accepted connection from {self.client_info}")
+
+                # GVL().logger.info(f"Stopping discovery {self.client_info}")
+                # self.stop_discovery()
 
                 return 1  # ✅ Success
 
@@ -61,6 +65,7 @@ class AndroidBroker(Broker):
                 time.sleep(2)  # ⏳ Wait before retrying
 
         return self.connect()  # ❌ Failed after max retries, recursively try (LOL AHHAHAHAHAH)
+
 
     def send(self, message: str) -> None:
         """Sends a message to the connected Bluetooth client."""
@@ -114,8 +119,9 @@ class AndroidBroker(Broker):
 
             message = self.receive()
             if message:
-                print(f"Received: {message}")
-                if callback:
+                if message == '''{"from":"android","msg":{"type":"heartbeat"}}''':
+                    pass
+                elif callback:
                     callback(message)
 
     def consume(self, message: dict):
@@ -125,11 +131,16 @@ class AndroidBroker(Broker):
             # straight away give the data to the algo broker, dun wait
             GVL().android_has_sent_map = True
             GVL().android_map = message["data"]
+            GVL().android_map_data = message["data"]
             # invoke the sending of map data to algo broker
             # make sure to reset the stm instruciton list to None
             GVL().stm_instruction_list = None
-            GVL().algo_broker.send_message(json.dumps(message))
+            print(message["data"])
+            print("sending to algo broker")
+            GVL().algo_broker.send(json.dumps(message))
+            print("sent to algo broker")
             GVL().logger.info(f"Sent map data to broker {json.dumps(message)}")
+            GVL().android_has_sent_map = True
             
         elif message.get("type") == "command":
             GVL().taskId = int(message["data"]["taskId"])
@@ -144,6 +155,10 @@ class AndroidBroker(Broker):
             except bluetooth.BluetoothError:
                 pass
             self.client_sock = None
+
+    def stop_discovery(self):
+        os.system('echo -e "power on\ndiscoverable off\npairable off\nexit" | sudo bluetoothctl')
+        return
 
     def restart_bluetooth(self):
         """Restarts Bluetooth synchronously and ensures it's discoverable."""
@@ -165,6 +180,115 @@ class AndroidBroker(Broker):
 
         time.sleep(5)  # ⏳ Wait for Bluetooth to fully restart
         GVL().logger.warning("Bluetooth restart completed.")
+
+
+
+    def send_scanning(self, position_x: int, position_y: int, orientation: str):
+        data = {
+                "from": "rpi",
+                "msg": {
+                "type": "status",
+                "data": {
+                        "nextAction": "scanning",
+                        "currentPosition": {
+                        "orientation": orientation,
+                        "x": position_x,
+                        "y": position_y
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
+    def send_obstacle_image_found(self, position_x: int, position_y: int, orientation: str, obstacle_id: int, image_id: int):
+        data = {
+                "from": "rpi",
+                "msg": {
+                        "type": "status",
+                        "data": {
+                        "nextAction": "idle",
+                        "currentPosition": {
+                            "orientation": orientation,
+                            "x": position_x,
+                            "y": position_y
+                        },
+                        "target": {
+                            "obstacleId": obstacle_id,
+                            "imageId": image_id
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
+    def send_idling(self, position_x: int, position_y: int, orientation: str):
+        data = {
+                "from": "rpi",
+                "msg": {
+                    "type": "status",
+                    "data": {
+                        "nextAction": "idle",
+                        "currentPosition": {
+                            "orientation": orientation,
+                            "x": position_x,
+                            "y": position_y
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
+    def send_moving(self, position_x: int, position_y: int, orientation: str):
+        data = {
+                "from": "rpi",
+                "msg": {
+                    "type": "status",
+                    "data": {
+                        "nextAction": "moving",
+                        "currentPosition": {
+                            "orientation": orientation,
+                            "x": position_x,
+                            "y": position_y
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
+    def send_finished(self, position_x: int, position_y: int, orientation: str):
+        data = {
+                "from": "rpi",
+                "msg": {
+                    "type": "status",
+                    "data": {
+                        "nextAction": "finished",
+                        "currentPosition": {
+                            "orientation": orientation,
+                            "x": position_x,
+                            "y": position_y
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
+    def send_error(self, position_x: int, position_y: int, orientation: str):
+        data = {
+                "from": "rpi",
+                "msg": {
+                    "type": "status",
+                    "data": {
+                        "nextAction": "error",
+                        "currentPosition": {
+                            "orientation": orientation,
+                            "x": position_x,
+                            "y": position_y
+                        }
+                    }
+                }
+            }
+        self.send(data)
+
 
 if __name__ == "__main__":
     android = AndroidBroker()

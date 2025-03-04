@@ -10,6 +10,7 @@ class TCPClient(Broker):
         self.server_host = server_host
         self.server_port = server_port
         self.client_socket: socket.socket = None
+        self.buffer = ""
 
     def connect(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,8 +26,26 @@ class TCPClient(Broker):
         return
     
     def receive(self):
-        assert self.client_socket is not None, "client not connected, cannot receive"
-        return self.client_socket.recv(1024).decode('utf-8')
+        """Receive messages and use a builder pattern to accumulate fragmented data."""
+        assert self.client_socket is not None, "Client not connected, cannot receive"
+
+        while True:
+            chunk = self.client_socket.recv(1024).decode('utf-8')
+            if not chunk:
+                break  # No more data, message might be complete
+            self.buffer += chunk  # Append to buffer
+            
+            # Try parsing as JSON (optional, if messages are JSON-based)
+            try:
+                message = json.loads(self.buffer)
+                cpy = self.buffer
+                self.buffer = ""  # Reset buffer after successful parse
+                return cpy  # Return complete message
+            except json.JSONDecodeError:
+                continue  # Incomplete message, continue receiving
+
+        return None  # No valid message received
+
 
     def run_until_death(self, callback: Callable[[str], None]):
         while True:
@@ -36,9 +55,16 @@ class TCPClient(Broker):
                     callback(message)
 
     def consume(self, message: dict):
+        # print("LE MESSAGE", message)
         if "type" in message:
-            if "paths-data" == message["type"]:
+            if "path" == message["type"]:
                 GVL().stm_instruction_list = message["data"]
+                GVL().obstacleIdSequence = message["sequence"]
+                GVL().coordinates = message["coordinates"]
+
+                GVL().logger.debug(GVL().stm_instruction_list)
+                GVL().logger.debug(GVL().obstacleIdSequence)
+                GVL().logger.debug(GVL().coordinates)
             if "prediction-result" == message["type"]:
                 GVL().predicted_image = message["data"]
 
@@ -48,7 +74,7 @@ class TCPClient(Broker):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             try:
                 client_socket.connect((self.server_host, self.server_port))
-                print(f"Connected to server at {self.server_host}:{self.server_port}")
+                # print(f"Connected to server at {self.server_host}:{self.server_port}")
 
                 client_socket.sendall(message.encode('utf-8'))
                 response = client_socket.recv(1024).decode('utf-8')
@@ -67,6 +93,12 @@ if __name__ == "__main__":
     t1 = Thread(target=client.run_until_death, args=(print,))
     t1.start()
     client.send("predict")
+#     client = TCPClient(server_host='192.168.24.40', server_port=4000)
+#     client.connect()
+#     t1 = Thread(target=client.run_until_death, args=(print,))
+#     t1.start()
+#     d = {'obstacles': [{'id': 2, 'x': 45, 'y': 125, 'orientation': 'N', 'imageId': 0}, {'id': 3, 'x': 135, 'y': 85, 'orientation': 'E', 'imageId': 0}, {'id': 1, 'x': 95, 'y': 45, 'orientation': 'N', 'imageId': 0}], 'robot': {'startPointX': 10, 'startPointY': 10, 'orientation': 'N'}}
+#     client.send(json.dumps(d))
 #     # client_socket.sendall(data.encode('utf-8'))
 #     resp = client.send_message("predict")
 #     print(resp)

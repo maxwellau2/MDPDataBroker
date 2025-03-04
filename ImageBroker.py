@@ -11,7 +11,7 @@ from GlobalVariableManager import GVL
 # Constants
 PACKET_SIZE = 1300  # UDP packet size < 1500 bytes (safe for most networks)
 WIDTH, HEIGHT = 640, 480
-FPS = 10
+FPS = 20
 
 class ImageBroker:
     def __init__(self, udp_port: int, ip_address: str):

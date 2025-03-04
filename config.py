@@ -1,5 +1,7 @@
 BLUETOOTH_PORT = "/dev/rfcomm3"
 
+SELF_STATIC_IP = "192.168.24.1"
+
 STM_PORT = "/dev/ttyUSB0"
 STM_BAUD_RATE = 115200
 
@@ -7,12 +9,17 @@ STM_BAUD_RATE = 115200
 IMG_TCP_IP="192.168.24.20"
 IMG_TCP_PORT=5000
 
-# ziyan laptop
-ALGO_TCP_IP="192.168.24.32"
+# nick laptop
+# ALGO_TCP_IP="192.168.24.40"
+# ALGO_TCP_PORT=4000
+
+#syed laptop
+ALGO_TCP_IP="192.168.24.49"
 ALGO_TCP_PORT=4000
 
 # Max laptop:
 UDP_IP = "192.168.24.20"
-# Syed:
-# UDP_IP = "192.168.24.49" 
 UDP_PORT = 9999
+# Syed:
+WS_IP = "192.168.24.49" 
+WS_PORT = 8765

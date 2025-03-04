@@ -1,4 +1,5 @@
 import json
+import math
 
 from GlobalVariableManager import GVL
 
@@ -30,22 +31,32 @@ class CommandParser:
 
     @staticmethod
     def map_algo_to_stm_command(algo_command: dict):
+        length = 5  # Ensure total length is 5 characters
         movement = ""
         key = list(algo_command.keys())[0]
-        if key == "s" and algo_command[key] < 0:
+        leftR = 26
+        rightR = 25
+        val = algo_command[key]
+        if key == "b":
             movement = "BW"
+        elif key == "p":
+            return "P0100"  # Already 5 characters
         elif key == "s":
             movement = "FW"
         elif key == "l":
-            movement = "A"
+            movement = "AF"
+            val = int(val/leftR * 180/math.pi)
         elif key == "r":
-            movement = "C"
+            movement = "CF"
+            val = int(val/rightR * 180/math.pi)
         else:
-            # print(f"uncaught movement type: {key}")
-            return None
-        if movement in ['A', 'C']: # add the sapce
-            return f"{movement} {int(float(algo_command[key]))}"
-        return f"{movement}{int(float(algo_command[key]))}"
+            return None  # Unhandled movement type
+
+        # Extract and format the numeric part
+        numeric_value = int(float(val))  # Convert to int
+        numeric_str = str(abs(numeric_value)).zfill(length - len(movement))  # Pad with zeros
+
+        return f"{movement}{numeric_str}"
 
 
 
